@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\File;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rules\Unique;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -27,38 +24,30 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $userAttributes = $request->validate([
+            'name' => ['required'],
+            // confirm that the email is unique in users table in email field 
+            'email' => ['required' , 'email' , 'unique:users,email'], 
+            'password' => ['required' , 'confirmed' , Password::min(6)],
+        ]);
+
+        $employerAttributes = $request->validate([
+            'employer' => ['required'],
+            'logo' => ['required' , File::types(['png' , 'jpg' , 'webp'])],
+        ]);
+
+        $user = User::create($userAttributes);
+
+        $logopath = $request->logo->store('logos');
+
+        $user->employer()->create([
+            'name' => $employerAttributes['employer'],
+            'logo' => $logopath,
+        ]);
+        
+        Auth::login($user);
+
+        return redirect('/');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }
